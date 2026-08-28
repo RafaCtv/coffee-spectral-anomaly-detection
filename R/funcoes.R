@@ -1,0 +1,100 @@
+# Leitura da serie, agregacao e execucao do BFAST Monitor.
+
+suppressMessages({
+  library(zoo)
+  library(bfast)
+})
+
+# bfastmonitor devolve a data da quebra em ano decimal.
+decimal_para_data <- function(x) {
+  out <- as.Date(rep(NA_real_, length(x)), origin = "1970-01-01")
+  ok  <- !is.na(x)
+  if (!any(ok)) return(out)
+  ano <- floor(x[ok])
+  ini <- as.Date(paste0(ano, "-01-01"))
+  fim <- as.Date(paste0(ano + 1, "-01-01"))
+  out[ok] <- ini + (x[ok] - ano) * as.numeric(fim - ini)
+  out
+}
+
+data_para_decimal <- function(d) {
+  ano <- as.integer(format(d, "%Y"))
+  ini <- as.Date(paste0(ano, "-01-01"))
+  fim <- as.Date(paste0(ano + 1, "-01-01"))
+  ano + as.numeric(d - ini) / as.numeric(fim - ini)
+}
+
+# Areas na sobreposicao de quadriculas MGRS recebem o mesmo pixel duas vezes
+# por passagem (instantes separados por segundos, NDVI ligeiramente diferente);
+# reprocessamentos da mesma data-take geram copias extras. bfastts indexa por
+# ano+dia e descartaria as redundantes silenciosamente, mantendo uma qualquer.
+# Agregar aqui garante que o n reportado seja o n usado no ajuste.
+agrega_pixel_dia <- function(df) {
+  stopifnot(all(c("longitude", "latitude", "date", "NDVI") %in% names(df)))
+  df <- df[!is.na(df$NDVI), ]
+  n_antes <- nrow(df)
+
+  ag <- aggregate(NDVI ~ longitude + latitude + date, data = df, FUN = mean)
+  ag <- ag[order(ag$longitude, ag$latitude, ag$date), ]
+
+  attr(ag, "n_antes")   <- n_antes
+  attr(ag, "n_depois")  <- nrow(ag)
+  attr(ag, "reduzidas") <- n_antes - nrow(ag)
+  ag
+}
+
+le_serie <- function(caminho, verbose = TRUE) {
+  if (!file.exists(caminho))
+    stop("serie nao encontrada: ", caminho, "\nRode antes: python gee/extrai_serie.py")
+  df <- read.csv(caminho, stringsAsFactors = FALSE)
+  df$date <- as.Date(df$date)
+  ag <- agrega_pixel_dia(df)
+  if (verbose) {
+    cat(sprintf("serie: %d linhas -> %d observacoes pixel-dia (%d redundantes agregadas)\n",
+                attr(ag, "n_antes"), attr(ag, "n_depois"), attr(ag, "reduzidas")))
+    cat(sprintf("pixels: %d | periodo: %s a %s\n",
+                length(unique(paste(ag$longitude, ag$latitude))),
+                format(min(ag$date)), format(max(ag$date))))
+  }
+  ag
+}
+
+id_pixel <- function(lon, lat) paste(lon, lat, sep = "_")
+
+# type="irregular" produz um ts de frequencia 365: grade diaria da primeira a
+# ultima observacao, dias sem imagem como NA, sem interpolacao. O dia do ano vem
+# de um calendario fixo de 365 dias, entao datas pos-fevereiro de ano bissexto
+# deslocam um dia (1/365 do ciclo).
+monta_ts <- function(datas, valores) {
+  bfastts(valores, datas, type = "irregular")
+}
+
+# NULL quando nao ha dados suficientes ou o ajuste falha.
+roda_monitor <- function(datas, valores, monitor_inicio, cfg) {
+  if (length(valores) < cfg_num(cfg, "min_obs_historico")) return(NULL)
+
+  nts <- tryCatch(monta_ts(datas, valores), error = function(e) NULL)
+  if (is.null(nts)) return(NULL)
+
+  formula <- as.formula(paste("response ~", cfg$bfast_formula))
+
+  out <- tryCatch(
+    bfastmonitor(nts,
+                 start   = data_para_decimal(monitor_inicio),
+                 formula = formula,
+                 order   = as.integer(cfg$bfast_order),
+                 history = "all",
+                 level   = cfg_num(cfg, "bfast_level")),
+    error = function(e) NULL, warning = function(w) NULL
+  )
+  if (is.null(out)) return(NULL)
+
+  r2 <- tryCatch(summary(out$model)$r.squared, error = function(e) NA_real_)
+  list(
+    breakpoint  = out$breakpoint,
+    data_quebra = decimal_para_data(out$breakpoint),
+    magnitude   = out$magnitude,
+    r2          = r2,
+    n_obs       = length(valores)
+  )
+}

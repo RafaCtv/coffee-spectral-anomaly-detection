@@ -1,0 +1,76 @@
+name: monitor diario
+
+# Requer os secrets EE_SERVICE_ACCOUNT_JSON (conteudo da chave da service
+# account registrada no Earth Engine) e EE_PROJECT.
+#
+# Workflows agendados sao desativados apos 60 dias sem atividade no repo; o
+# commit diario de estado evita isso. O cron pode atrasar em horario de pico,
+# o que e irrelevante aqui (a latencia do Sentinel-2 e de dias).
+
+on:
+  schedule:
+    - cron: "0 9 * * *"      # 06:00 em Brasilia
+  workflow_dispatch:
+
+jobs:
+  monitorar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install earthengine-api
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "release"
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::zoo
+            any::bfast
+
+      # A serie bruta nao e versionada; o cache evita reextrair todo o
+      # historico a cada execucao.
+      - name: Cache da serie
+        uses: actions/cache@v4
+        with:
+          path: dados
+          key: serie-${{ github.run_id }}
+          restore-keys: serie-
+
+      - name: Extrair
+        env:
+          EE_SERVICE_ACCOUNT_JSON: ${{ secrets.EE_SERVICE_ACCOUNT_JSON }}
+          EE_PROJECT: ${{ secrets.EE_PROJECT }}
+        run: python gee/extrai_serie.py
+
+      - name: Monitorar
+        run: Rscript R/monitora.R operacao
+
+      - name: Commit do estado
+        run: |
+          git config user.name  "monitor"
+          git config user.email "monitor@users.noreply.github.com"
+          git add estado/
+          if git diff --staged --quiet; then
+            echo "sem mudancas"
+          else
+            git commit -m "monitor: $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: saidas-${{ github.run_id }}
+          path: |
+            estado/
+            log/
+          retention-days: 30

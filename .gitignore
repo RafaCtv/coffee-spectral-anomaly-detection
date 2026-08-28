@@ -1,0 +1,35 @@
+# Serie bruta: fica fora do git. Arquivo grande commitado permanece no
+# historico para sempre, e o GitHub rejeita acima de 100 MB.
+dados/**
+!dados/.gitkeep
+
+# Credenciais do Earth Engine. No CI entram como secret.
+*credenciais*.json
+*credentials*.json
+*service_account*.json
+.env
+
+# Saidas regeraveis
+figuras/**
+!figuras/.gitkeep
+log/**
+!log/.gitkeep
+
+# estado/ e versionado de proposito (trilha de alertas)
+estado/*.tmp
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+.DS_Store
+Thumbs.db
+desktop.ini
