@@ -69,7 +69,7 @@ def main() -> int:
 
     datas = base.aggregate_array("system:time_start").getInfo()
     por_ano = collections.Counter(
-        dt.datetime.utcfromtimestamp(t / 1000).year for t in datas)
+        dt.datetime.fromtimestamp(t / 1000, dt.timezone.utc).year for t in datas)
 
     col = colecao_ndvi(cfg, area, inicio, fim)
     stats = col.select("NDVI").reduce(ee.Reducer.count()).reduceRegion(

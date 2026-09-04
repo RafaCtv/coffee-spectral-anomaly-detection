@@ -54,7 +54,7 @@ def extrai_lote(col, area, escala: int) -> list[list]:
     for r in bruto[1:]:
         if r[i_ndvi] is None:  # pixel mascarado
             continue
-        ts = dt.datetime.utcfromtimestamp(r[i_t] / 1000.0)
+        ts = dt.datetime.fromtimestamp(r[i_t] / 1000.0, dt.timezone.utc)
         linhas.append([
             r[i_lon], r[i_lat],
             ts.strftime("%Y-%m-%d"), ts.strftime("%Y-%m-%d %H:%M:%S"),

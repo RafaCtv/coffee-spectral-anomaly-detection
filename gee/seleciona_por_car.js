@@ -3,53 +3,71 @@
 // Substitui o agrupamento por proximidade: em vez de inferir a fazenda pela
 // distancia entre talhoes, usa o perimetro declarado do imovel rural.
 //
-// Etapa 1: ALVO = null           -> ranqueia os imoveis por area de cafe
-// Etapa 2: ALVO = 'MG-3108008-…' -> seleciona um imovel e exporta
+// O SICAR tem dois downloads, com esquemas de atributos diferentes:
+//   por propriedade (clicando no mapa): recibo, modfiscais, tema, area
+//   base municipal:                     COD_IMOVEL, NUM_AREA, NOM_MUNICI
+// FORMATO seleciona qual dos dois. No formato por propriedade, cada shapefile
+// traz duas feicoes ("Area do Imovel" e "Area Liquida"), quase coincidentes.
+//
+// Etapa 1: ALVO = null -> ranqueia os imoveis por area de cafe
+// Etapa 2: ALVO = '<codigo>' -> seleciona um imovel e exporta
 
-var CAR   = 'projects/spad05/assets/CAR_BomSucesso';
+var FORMATO = 'propriedade';   // 'propriedade' ou 'municipal'
+
+// Um asset por imovel baixado; no formato municipal, um asset so.
+var CAR = [
+  'projects/spad05/assets/Area_do_Imovel'
+];
+
 var CAFE  = 'projects/spad05/assets/BomSucesso';
-var ALVO  = null;
+var ALVO  = 'MG-3108008-8D60BF7DCAF14B72A73918EB8892BE5A';
 var RECUO = -15;    // m; buffer negativo, remove pixels de borda do talhao
 var ANO   = 2026;
 
-var car  = ee.FeatureCollection(CAR);
+var CAMPO_COD = FORMATO === 'propriedade' ? 'recibo' : 'COD_IMOVEL';
+var CAMPO_AREA = FORMATO === 'propriedade' ? 'area' : 'NUM_AREA';
+
+// map do lado do cliente: CAR e um array JavaScript, nao um ee.List.
+var car = ee.FeatureCollection(CAR.map(function (id) {
+  return ee.FeatureCollection(id);
+})).flatten();
+
+// "Area Liquida do Imovel" repete o mesmo perimetro; fica uma feicao por imovel.
+if (FORMATO === 'propriedade') {
+  car = car.distinct([CAMPO_COD]);
+}
+
 var cafe = ee.FeatureCollection(CAFE);
 
-// Os nomes dos campos variam conforme a versao do download do CAR.
-// Confira aqui e ajuste CAMPO_COD se necessario.
 print('Campos do CAR:', car.first());
-var CAMPO_COD = 'COD_IMOVEL';
-
-print('Imoveis no CAR:', car.size());
-print('Talhoes de cafe:', cafe.size());
+print('Imoveis:', car.size());
+print('Talhoes de cafe no municipio:', cafe.size());
 
 if (ALVO === null) {
 
-  // Casa cada imovel com os talhoes que o interceptam.
   var join = ee.Join.saveAll({matchesKey: 'talhoes'});
   var filtro = ee.Filter.intersects({
     leftField: '.geo', rightField: '.geo', maxError: 10
   });
 
-  var comCafe = join.apply(car, cafe, filtro);
-
-  var ranking = comCafe.map(function (f) {
+  var ranking = join.apply(car, cafe, filtro).map(function (f) {
     var t = ee.FeatureCollection(ee.List(f.get('talhoes')));
+    var recorte = t.map(function (g) {
+      return g.setGeometry(g.geometry().intersection(f.geometry(), 1));
+    });
     return f.set({
       n_talhoes: t.size(),
-      cafe_ha: t.aggregate_sum('Area_ha')
-    }).select([CAMPO_COD, 'NUM_AREA', 'n_talhoes', 'cafe_ha']);
+      cafe_ha: recorte.geometry().area(10).divide(1e4)
+    }).select([CAMPO_COD, CAMPO_AREA, 'n_talhoes', 'cafe_ha']);
   }).sort('cafe_ha', false);
 
-  print('Imoveis com cafe, do maior para o menor:', ranking.limit(25));
+  print('Imoveis com cafe, do maior para o menor:', ranking);
 
-  Map.centerObject(cafe, 11);
-  Map.addLayer(car.style({color: 'blue', fillColor: '00000000', width: 1}),
+  Map.centerObject(car, 11);
+  Map.addLayer(car.style({color: 'blue', fillColor: '0000ff22', width: 2}),
                {}, 'Imoveis do CAR');
   Map.addLayer(cafe.style({color: 'black', fillColor: '00000088'}),
                {}, 'Talhoes de cafe');
-  Map.addLayer(ranking.limit(10).style({color: 'orange', fillColor: 'ff8c0044'}),
-               {}, '10 imoveis com mais cafe');
 
   print('Copie um ' + CAMPO_COD + ' do ranking e defina ALVO.');
 
@@ -60,18 +78,21 @@ if (ALVO === null) {
   // Recorta os talhoes pelo perimetro do imovel: um talhao que atravessa a
   // divisa entra apenas na parte que pertence a esta propriedade.
   var talhoes = cafe.filterBounds(imovel.geometry()).map(function (f) {
-    return f.setGeometry(f.geometry().intersection(imovel.geometry(), 1));
-  }).filter(ee.Filter.gt('Area_ha', 0.5));
+    var g = f.geometry().intersection(imovel.geometry(), 1);
+    return f.setGeometry(g).set('ha_recorte', g.area(10).divide(1e4));
+  }).filter(ee.Filter.gt('ha_recorte', 0.5));
 
   var comRecuo = talhoes.map(function (f) {
     return f.setGeometry(f.geometry().buffer(RECUO));
-  });
+  }).filter(ee.Filter.notNull(['Area_ha']));
   var geom = comRecuo.geometry();
 
   print('--- imovel ' + ALVO + ' ---');
-  print('Area total do imovel (ha):', imovel.get('NUM_AREA'));
+  print('Area declarada (ha):', imovel.get(CAMPO_AREA));
   print('Talhoes de cafe:', talhoes.size());
-  print('Area de cafe apos recorte e recuo (ha):', geom.area(10).divide(1e4));
+  print('Areas apos recorte (ha):', talhoes.aggregate_array('ha_recorte').sort());
+  print('Area de cafe apos recorte (ha):', talhoes.geometry().area(10).divide(1e4));
+  print('Area de cafe apos recuo (ha):', geom.area(10).divide(1e4));
 
   Map.centerObject(imovel, 14);
   Map.addLayer(imovel.geometry(), {color: 'blue'}, 'Perimetro do imovel');
@@ -92,6 +113,8 @@ if (ALVO === null) {
                 .map(function (img) {
                   return img.updateMask(img.select('cs_cdf').gte(0.6));
                 });
+  Map.addLayer(limpa.median(), {bands: ['B4','B3','B2'], min: 0, max: 3000},
+               'Cor verdadeira ' + ANO, false);
   Map.addLayer(limpa.median(), {bands: ['B8','B4','B3'], min: 0, max: 5000},
                'Falsa cor ' + ANO, false);
 
@@ -106,7 +129,6 @@ if (ALVO === null) {
   Export.table.toDrive({
     collection: comRecuo,
     description: 'fazenda_geojson',
-    fileFormat: 'GeoJSON',
-    selectors: ['Area_ha', 'CD_MUN', 'NM_MUN', 'Name']
+    fileFormat: 'GeoJSON'
   });
 }

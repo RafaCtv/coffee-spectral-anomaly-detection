@@ -182,7 +182,7 @@ main <- function() {
 
   cat("modo:", m$modo, "| area:", cfg$area_nome, "\n\n")
 
-  serie <- le_serie(ARQ_SERIE)
+  serie <- le_serie(ARQ_SERIE, politica = cfg$agregacao_dia)
   est   <- le_estado(serie, m$monitor_inicio)
 
   r <- if (m$modo == "replay")

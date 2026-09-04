@@ -72,13 +72,13 @@ executa.ps1                orquestrador local
 
 ## Notas de implementação
 
-**Agregação pixel-dia.** As quadrículas MGRS do Sentinel-2 têm 110 km e são
-espaçadas de 100 km, então vizinhas se sobrepõem em ~10 km. Uma área nessa faixa
-recebe o mesmo pixel em dois produtos por passagem; reprocessamentos da mesma
-data-take geram cópias adicionais. Como o `bfastts` indexa por ano e dia, ele
-descartaria as redundantes silenciosamente, mantendo uma qualquer. A agregação
-pela média é feita antes, em `R/funcoes.R`, para que o número de observações
-reportado seja o usado no ajuste.
+**Observações concorrentes no mesmo dia.** Duas causas distintas. Reprocessamento
+da ESA entrega a mesma aquisição em dois produtos (mesmo datatake, tempos de
+geração diferentes): fica a versão mais recente, sem critério a escolher.
+Datatakes distintos no mesmo dia são medições reais e concorrentes; `agregacao_dia`
+define se fica a primeira ou a média. Como o `bfastts` indexa por ano e dia, sem
+regra explícita ele manteria a última linha, arbitrariamente. Resolver isso antes,
+em `R/funcoes.R`, faz o número de observações reportado ser o usado no ajuste.
 
 **Saída do `bfastts(type = "irregular")`.** Um `ts` de frequência 365: grade
 diária da primeira à última observação, dias sem imagem como `NA`, sem

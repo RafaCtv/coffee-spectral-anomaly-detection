@@ -2,8 +2,8 @@
 # Manter o formato plano: "chave: valor", sem aninhamento e sem listas.
 
 # --- Area ---
-area_geojson: area/fazenda.geojson
-area_nome: DEFINIR
+area_geojson: area/fazenda_car.geojson
+area_nome: MG-3108008-8D60BF7D
 
 # --- Periodo de extracao (data_fim aceita "hoje") ---
 data_inicio: 2019-01-01
@@ -17,6 +17,9 @@ limiar_nuvem: 0.6
 banda_vermelho: B4
 banda_nir: B8
 escala: 10
+
+# --- Observacoes concorrentes no mesmo dia: media ou primeira ---
+agregacao_dia: primeira
 
 # --- BFAST Monitor ---
 bfast_formula: harmon

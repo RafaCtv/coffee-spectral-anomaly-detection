@@ -24,34 +24,64 @@ data_para_decimal <- function(d) {
   ano + as.numeric(d - ini) / as.numeric(fim - ini)
 }
 
-# Areas na sobreposicao de quadriculas MGRS recebem o mesmo pixel duas vezes
-# por passagem (instantes separados por segundos, NDVI ligeiramente diferente);
-# reprocessamentos da mesma data-take geram copias extras. bfastts indexa por
-# ano+dia e descartaria as redundantes silenciosamente, mantendo uma qualquer.
-# Agregar aqui garante que o n reportado seja o n usado no ajuste.
-agrega_pixel_dia <- function(df) {
+# Duas situacoes distintas produzem mais de uma linha para o mesmo pixel-dia.
+#
+# 1. Reprocessamento: mesmo datatake (prefixo do img_id), produtos gerados pela
+#    ESA em momentos diferentes. E a mesma aquisicao entregue duas vezes; fica a
+#    versao mais recente. Nao ha criterio a escolher aqui.
+# 2. Datatakes distintos no mesmo dia: aquisicoes separadas por segundos, com
+#    NDVI ligeiramente diferente. Sao observacoes reais e concorrentes.
+#
+# bfastts indexa por ano+dia e so cabe um valor por dia: sem regra explicita ele
+# mantem a ultima linha, arbitrariamente. politica define o criterio do caso 2 e
+# os contadores separam os dois, para que o n reportado seja o n usado no ajuste.
+agrega_pixel_dia <- function(df, politica = "media") {
   stopifnot(all(c("longitude", "latitude", "date", "NDVI") %in% names(df)))
+  if (!politica %in% c("media", "primeira"))
+    stop("agregacao_dia invalida: ", politica, " (use media ou primeira)")
+
   df <- df[!is.na(df$NDVI), ]
   n_antes <- nrow(df)
 
-  ag <- aggregate(NDVI ~ longitude + latitude + date, data = df, FUN = mean)
+  n_reproc <- 0L
+  if ("img_id" %in% names(df)) {
+    df$datatake <- sub("_.*$", "", df$img_id)
+    df <- df[order(df$longitude, df$latitude, df$date, df$datatake, df$img_id), ]
+    chave <- paste(df$longitude, df$latitude, df$datatake)
+    df <- df[!duplicated(chave, fromLast = TRUE), ]
+    n_reproc <- n_antes - nrow(df)
+  }
+  n_pre <- nrow(df)
+
+  if (politica == "primeira") {
+    ord <- if ("datetime" %in% names(df)) df$datetime else as.character(df$date)
+    df <- df[order(df$longitude, df$latitude, df$date, ord), ]
+    ag <- df[!duplicated(paste(df$longitude, df$latitude, df$date)),
+             c("longitude", "latitude", "date", "NDVI")]
+  } else {
+    ag <- aggregate(NDVI ~ longitude + latitude + date, data = df, FUN = mean)
+  }
   ag <- ag[order(ag$longitude, ag$latitude, ag$date), ]
 
   attr(ag, "n_antes")   <- n_antes
   attr(ag, "n_depois")  <- nrow(ag)
-  attr(ag, "reduzidas") <- n_antes - nrow(ag)
+  attr(ag, "reproc")    <- n_reproc
+  attr(ag, "mesmo_dia") <- n_pre - nrow(ag)
+  attr(ag, "politica")  <- politica
   ag
 }
 
-le_serie <- function(caminho, verbose = TRUE) {
+le_serie <- function(caminho, verbose = TRUE, politica = "media") {
   if (!file.exists(caminho))
     stop("serie nao encontrada: ", caminho, "\nRode antes: python gee/extrai_serie.py")
   df <- read.csv(caminho, stringsAsFactors = FALSE)
   df$date <- as.Date(df$date)
-  ag <- agrega_pixel_dia(df)
+  ag <- agrega_pixel_dia(df, politica)
   if (verbose) {
-    cat(sprintf("serie: %d linhas -> %d observacoes pixel-dia (%d redundantes agregadas)\n",
-                attr(ag, "n_antes"), attr(ag, "n_depois"), attr(ag, "reduzidas")))
+    cat(sprintf("serie: %d linhas -> %d observacoes pixel-dia\n",
+                attr(ag, "n_antes"), attr(ag, "n_depois")))
+    cat(sprintf("  reprocessamento descartado: %d | mesmo dia (%s): %d\n",
+                attr(ag, "reproc"), attr(ag, "politica"), attr(ag, "mesmo_dia")))
     cat(sprintf("pixels: %d | periodo: %s a %s\n",
                 length(unique(paste(ag$longitude, ag$latitude))),
                 format(min(ag$date)), format(max(ag$date))))

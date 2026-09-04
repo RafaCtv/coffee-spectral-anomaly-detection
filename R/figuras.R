@@ -41,7 +41,7 @@ dev.off()
 
 # Saida do bfastmonitor no pixel de maior queda
 if (file.exists("dados/serie_ndvi.csv")) {
-  serie <- le_serie("dados/serie_ndvi.csv", verbose = FALSE)
+  serie <- le_serie("dados/serie_ndvi.csv", verbose = FALSE, politica = cfg$agregacao_dia)
   alvo  <- a[which.min(a$magnitude), ]
   obs   <- serie[serie$longitude == alvo$longitude &
                  serie$latitude  == alvo$latitude, ]

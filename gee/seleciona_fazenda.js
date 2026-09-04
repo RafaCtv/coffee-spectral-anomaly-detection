@@ -91,7 +91,6 @@ if (RECORTE === null) {
   Export.table.toDrive({
     collection: comRecuo,
     description: 'fazenda_geojson',
-    fileFormat: 'GeoJSON',
-    selectors: ['Area_ha', 'CD_MUN', 'NM_MUN', 'Name']
+    fileFormat: 'GeoJSON'
   });
 }

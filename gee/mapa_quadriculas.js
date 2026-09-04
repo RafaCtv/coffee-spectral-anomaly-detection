@@ -77,6 +77,5 @@ Map.addLayer(sobrepostos.style({color: 'ff0000', fillColor: 'ff000088'}),
 Export.table.toDrive({
   collection: limpos,
   description: 'talhoes_fora_da_sobreposicao',
-  fileFormat: 'GeoJSON',
-  selectors: ['Area_ha', 'CD_MUN', 'NM_MUN', 'Name', 'n_quadriculas']
+  fileFormat: 'GeoJSON'
 });
