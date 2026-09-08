@@ -56,9 +56,13 @@ if (file.exists("dados/serie_ndvi.csv")) {
       error = function(e) NULL)
 
     if (!is.null(bm)) {
-      png("figuras/monitor_pixel.png", width = 1400, height = 1000, res = 200)
-      plot(bm, main = sprintf("Pixel %.5f, %.5f  |  magnitude %+.3f",
-                              alvo$longitude, alvo$latitude, alvo$magnitude))
+      # res menor que as outras: a legenda do plot.bfastmonitor tem 6 entradas e
+      # invade a area de dados quando a fonte fica grande.
+      png("figuras/monitor_pixel.png", width = 1500, height = 850, res = 130)
+      par(mar = c(4, 4.5, 3, 1))
+      plot(bm, ylab = "NDVI", xlab = "tempo (anos)",
+           main = sprintf("Pixel %.5f, %.5f  |  magnitude %+.3f",
+                          alvo$longitude, alvo$latitude, alvo$magnitude))
       dev.off()
       cat("figuras/monitor_pixel.png\n")
     } else {

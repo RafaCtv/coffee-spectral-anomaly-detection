@@ -57,6 +57,12 @@ jobs:
       - name: Monitorar
         run: Rscript R/monitora.R operacao
 
+      # figuras/ esta no .gitignore, entao as imagens saem so como artefato e
+      # nao pesam no repositorio. Execucao sem nenhum alerta nao gera figura e
+      # nao deve derrubar o job.
+      - name: Figuras
+        run: Rscript R/figuras.R || echo "sem figuras nesta execucao"
+
       - name: Commit do estado
         run: |
           git config user.name  "monitor"
@@ -75,5 +81,6 @@ jobs:
           name: saidas-${{ github.run_id }}
           path: |
             estado/
+            figuras/
             log/
           retention-days: 30
