@@ -15,7 +15,7 @@ on:
 jobs:
   monitorar:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v4
