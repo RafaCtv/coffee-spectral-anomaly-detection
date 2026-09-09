@@ -57,9 +57,8 @@ jobs:
       - name: Monitorar
         run: Rscript R/monitora.R operacao
 
-      # figuras/ esta no .gitignore, entao as imagens saem so como artefato e
-      # nao pesam no repositorio. Execucao sem nenhum alerta nao gera figura e
-      # nao deve derrubar o job.
+      # figuras/ esta no .gitignore: as imagens saem so como artefato. Execucao
+      # sem alerta nao gera figura e nao deve derrubar o job.
       - name: Figuras
         run: Rscript R/figuras.R || echo "sem figuras nesta execucao"
 

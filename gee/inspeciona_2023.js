@@ -1,6 +1,6 @@
 // Inspecao visual da perturbacao detectada no 2o semestre de 2023.
 //
-// A analise em R apontou 170 pixels (~1,7 ha) com queda de NDVI entre set e
+// A analise em R apontou 170 pixels (~1,6 ha) com queda de NDVI entre set e
 // dez/2023, seguida de recuperacao lenta. O padrao (bordas retas, grupo mais
 // vigoroso que o resto ate 2022, queda permanente) sugere recepa.
 //

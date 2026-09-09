@@ -1,5 +1,5 @@
 // Seleciona os talhoes de uma fazenda a partir do mapeamento municipal e
-// exporta como GeoJSON para area/fazenda.geojson.
+// exporta como GeoJSON para area/fazenda_car.geojson.
 //
 // 1. Rode com RECORTE = null para ver todos os talhoes do municipio.
 // 2. Desenhe um retangulo em volta da fazenda escolhida (ferramenta de

@@ -1,6 +1,6 @@
 # Scripts da versão anterior
 
-Mantidos para referência. Não são usados pelo pipeline — foram reescritos em
+Mantidos para referência. Não são usados pelo pipeline. Foram reescritos em
 `gee/extrai_serie.py` e `R/monitora.R`.
 
 | Arquivo | O que era |
@@ -19,7 +19,7 @@ dependiam de `Export.table.toDrive`, que é assíncrono e não pode ser agendado
 partir do Code Editor.
 
 **Deduplicação.** `bfast_pixel_centroide.R` filtrava por
-`duplicated(datetime, NDVI)`, combinação que nunca se repete — as entregas
+`duplicated(datetime, NDVI)`, combinação que nunca se repete, pois as entregas
 redundantes vêm de quadrículas diferentes, com instantes separados por segundos.
 O filtro removia zero linhas. `bfast_por_pixel.R` não tinha filtro. A agregação
 agora é explícita, por pixel e dia.

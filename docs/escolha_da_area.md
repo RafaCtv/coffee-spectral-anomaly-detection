@@ -16,7 +16,7 @@ das quadrículas `T23KMS` e `T23KNS`. O pipeline trata isso agregando por
 pixel-dia, mas escolher uma área dentro de uma única quadrícula elimina o
 problema na origem.
 
-**Borda de talhão.** Um pixel de 10 m sobre a divisa é misto — parte café,
+**Borda de talhão.** Um pixel de 10 m sobre a divisa é misto: parte café,
 parte carreador, mata ou pasto. A série combina duas dinâmicas e gera quebras
 que não correspondem a nada acontecendo no cafeeiro. Mitigação: recuo
 (*buffer* negativo) de 10 a 20 m no polígono.
@@ -47,8 +47,8 @@ Os polígonos existentes (`ConceicaoCafeAjustado.shp`, `cafeMinasCorrigido.shp`)
 foram digitalizados sobre imagens de anos atrás. Entre aquela data e 2026, os
 talhões podem ter passado por renovação, replantio, recepa, ampliação ou
 abandono, e carreadores podem ter sido abertos. Polígono desatualizado inclui
-na análise pixels que não são café, cada um com sua própria dinâmica espectral —
-o BFAST detecta quebras neles, reais, mas de outra coisa.
+na análise pixels que não são café, cada um com sua própria dinâmica espectral.
+O BFAST detecta quebras neles, reais, mas de outra coisa.
 
 O ajuste consiste em redesenhar os limites sobre uma imagem recente, tipicamente
 no QGIS: carregar a imagem de 2026 como fundo, sobrepor o shapefile, ativar a
@@ -70,18 +70,18 @@ método deve detectar, com data verdadeira conhecida.
 
 **Consequência metodológica.** Polígonos ajustados sobre imagem de 2026
 descrevem a lavoura em 2026. Aplicá-los a uma série iniciada em 2019 assume que
-aquela área era café durante todo o período — falso para talhões renovados no
+aquela área era café durante todo o período, falso para talhões renovados no
 meio da série. Ou o período de análise começa após a última mudança conhecida,
 ou a mudança entra como evento esperado na interpretação.
 
 ## Formato
 
-Salvar como GeoJSON em `area/fazenda.geojson`, EPSG:4326, e atualizar o
+Salvar como GeoJSON em `area/fazenda_car.geojson`, EPSG:4326, e atualizar o
 `config.yml`:
 
 ```yaml
-area_geojson: area/fazenda.geojson
-area_nome: Fazenda XYZ - Município (MG)
+area_geojson: area/fazenda_car.geojson
+area_nome: MG-3108008-8D60BF7D
 ```
 
 GeoJSON em vez de shapefile: um arquivo em vez de cinco, é texto e versiona bem

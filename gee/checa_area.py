@@ -55,17 +55,12 @@ def main() -> int:
     print(f"quadriculas MGRS : {', '.join(tiles)}")
     print(f"orbitas          : {', '.join(str(o) for o in orbitas)}")
 
-    if len(tiles) == 1:
-        print("\n  OK: quadricula unica, fora da faixa de sobreposicao.")
-    else:
-        print(f"\n  ATENCAO: {len(tiles)} quadriculas cobrem a area, ou seja, ela")
-        print("  esta na sobreposicao. Cada passagem entrega o mesmo pixel em dois")
-        print("  produtos. E tratavel (agregacao pixel-dia), mas havendo candidata")
-        print("  equivalente dentro de uma quadricula so, prefira-a.")
+    if len(tiles) > 1:
+        print(f"\n  {len(tiles)} quadriculas: a area esta na faixa de sobreposicao")
+        print("  e cada passagem entrega o mesmo pixel em dois produtos.")
 
     if len(orbitas) > 1:
-        print(f"\n  Nota: {len(orbitas)} orbitas. Aumenta a revisita, mas introduz")
-        print("  variacao de geometria de visada entre observacoes.")
+        print(f"\n  {len(orbitas)} orbitas: mais revisita, geometria de visada variavel.")
 
     datas = base.aggregate_array("system:time_start").getInfo()
     por_ano = collections.Counter(
@@ -90,13 +85,13 @@ def main() -> int:
         print(f"  max   : {stats.get('NDVI_count_max'):.0f}")
         print(f"  aproveitamento: {100 * media / n:.0f}% das passagens")
         if media < 60:
-            print("\n  ATENCAO: poucas observacoes por pixel. Historico curto")
-            print("  compromete o ajuste do modelo sazonal.")
+            print("\n  poucas observacoes por pixel: historico curto compromete o")
+            print("  ajuste sazonal.")
 
-    print("\n--- veredito ---")
-    ok = len(tiles) == 1 and (media or 0) >= 60
-    print("  Area adequada." if ok else "  Utilizavel, mas veja as ressalvas.")
-    print("  Confirme visualmente com gee/inspeciona_area.js\n")
+    print("\n--- criterios ---")
+    print(f"  quadricula unica            : {'sim' if len(tiles) == 1 else 'nao'}")
+    print(f"  >= 60 observacoes por pixel : {'sim' if (media or 0) >= 60 else 'nao'}")
+    print("  confirmar visualmente com gee/inspeciona_area.js\n")
     return 0
 
 

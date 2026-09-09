@@ -3,7 +3,7 @@
 // 1. Desenhe o poligono com a ferramenta de geometria e nomeie como "area",
 //    ou importe o shapefile como asset.
 // 2. Rode e leia o console.
-// 3. Copie o GeoJSON impresso no final para area/fazenda.geojson.
+// 3. Copie o GeoJSON impresso no final para area/fazenda_car.geojson.
 
 var DATA_INICIO  = '2026-01-01';
 var DATA_FIM     = '2026-12-31';

@@ -29,7 +29,7 @@ Rscript R/instala_dependencias.R
 pip install earthengine-api
 earthengine authenticate
 
-# definir a área (ver docs/escolha_da_area.md), salvar em area/fazenda.geojson
+# definir a área (ver docs/escolha_da_area.md), salvar em area/fazenda_car.geojson
 # e atualizar area_geojson e area_nome no config.yml
 
 python gee/checa_area.py       # valida a área escolhida
@@ -52,7 +52,7 @@ No Windows: `.\executa.ps1 -ComFiguras`
 
 ```
 config.yml                 parâmetros (Python e R leem daqui)
-area/fazenda.geojson       polígono da área de estudo
+area/fazenda_car.geojson   polígono da área de estudo
 gee/
   comum.py                 auth, config, área, coleção NDVI
   checa_area.py            diagnóstico de área candidata
@@ -63,6 +63,7 @@ R/
   config.R                 leitor do config.yml
   funcoes.R                agregação pixel-dia, montagem da série
   monitora.R               máquina de estados
+  inspeciona_serie.R       execução avulsa, fora da máquina de estados
   figuras.R                mapa, histograma, saída do bfastmonitor
 dados/                     série bruta (fora do git)
 estado/                    estado por pixel, resumo e alertas
@@ -94,9 +95,9 @@ A chave da service account não entra no repositório. Localmente, usar
 
 ## Pendente
 
-- [ ] Definir a fazenda e salvar `area/fazenda.geojson`
-- [ ] Rodar `checa_area.py` e confirmar quadrícula única
-- [ ] Confirmar a data da imagem de referência dos polígonos
-- [ ] Primeira extração completa
-- [ ] Validação em modo `replay`
-- [ ] Ativar o agendamento
+- Validação em modo `replay` contra a geada de julho de 2021, para o MTTD
+- Ajuste dos polígonos sobre imagem recente; o mapeamento de origem é de 13/06/2022
+- `decimal_para_data` em `R/funcoes.R` usa o comprimento real do ano, enquanto o
+  `bfastts` usa grade fixa de 365 dias: datas de quebra em anos bissextos saem
+  com um dia de diferença
+- Varredura de `bfast_order` e da largura da janela MOSUM

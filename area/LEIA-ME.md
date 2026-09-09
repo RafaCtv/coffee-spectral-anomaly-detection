@@ -4,7 +4,7 @@ Polígono da fazenda em GeoJSON, EPSG:4326.
 
 ```
 area/
-  fazenda.geojson        área definitiva (referenciada no config.yml)
+  fazenda_car.geojson    área definitiva (referenciada no config.yml)
   candidata_01.geojson   opcional, para comparar antes de decidir
 ```
 
