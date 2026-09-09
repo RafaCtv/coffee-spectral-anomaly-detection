@@ -34,6 +34,16 @@ cfg_data <- function(cfg, chave) {
   d
 }
 
+# history do bfastmonitor: ROC recorta o trecho estavel mais recente do
+# historico por pixel, all usa o historico inteiro, BP segmenta por quebras.
+cfg_historico <- function(cfg) {
+  v <- cfg$bfast_history
+  if (is.null(v) || !nzchar(v)) return("ROC")
+  if (!v %in% c("ROC", "BP", "all"))
+    stop("config 'bfast_history' invalido: ", v, " (use ROC, BP ou all)")
+  v
+}
+
 cfg_modo <- function(cfg, modo = NULL) {
   m <- if (is.null(modo)) cfg$modo else modo
   if (!m %in% c("operacao", "replay")) stop("modo invalido: ", m)

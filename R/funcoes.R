@@ -24,17 +24,11 @@ data_para_decimal <- function(d) {
   ano + as.numeric(d - ini) / as.numeric(fim - ini)
 }
 
-# Duas situacoes distintas produzem mais de uma linha para o mesmo pixel-dia.
-#
-# 1. Reprocessamento: mesmo datatake (prefixo do img_id), produtos gerados pela
-#    ESA em momentos diferentes. E a mesma aquisicao entregue duas vezes; fica a
-#    versao mais recente. Nao ha criterio a escolher aqui.
-# 2. Datatakes distintos no mesmo dia: aquisicoes separadas por segundos, com
-#    NDVI ligeiramente diferente. Sao observacoes reais e concorrentes.
-#
-# bfastts indexa por ano+dia e so cabe um valor por dia: sem regra explicita ele
-# mantem a ultima linha, arbitrariamente. politica define o criterio do caso 2 e
-# os contadores separam os dois, para que o n reportado seja o n usado no ajuste.
+# Mais de uma linha por pixel-dia tem duas causas. Reprocessamento da ESA
+# entrega a mesma aquisicao (mesmo datatake) em dois produtos: fica a mais
+# recente. Datatakes distintos no mesmo dia sao medicoes concorrentes, e
+# politica decide entre elas. bfastts comporta um valor por dia e, sem regra
+# explicita, mantem a ultima linha do arquivo.
 agrega_pixel_dia <- function(df, politica = "media") {
   stopifnot(all(c("longitude", "latitude", "date", "NDVI") %in% names(df)))
   if (!politica %in% c("media", "primeira"))
@@ -91,10 +85,9 @@ le_serie <- function(caminho, verbose = TRUE, politica = "media") {
 
 id_pixel <- function(lon, lat) paste(lon, lat, sep = "_")
 
-# type="irregular" produz um ts de frequencia 365: grade diaria da primeira a
-# ultima observacao, dias sem imagem como NA, sem interpolacao. O dia do ano vem
-# de um calendario fixo de 365 dias, entao datas pos-fevereiro de ano bissexto
-# deslocam um dia (1/365 do ciclo).
+# type="irregular" devolve um ts de frequencia 365: grade diaria, NA nos dias
+# sem imagem, sem interpolacao. O dia do ano vem de um calendario fixo de 365
+# dias, o que desloca as datas pos-fevereiro de ano bissexto.
 monta_ts <- function(datas, valores) {
   bfastts(valores, datas, type = "irregular")
 }
@@ -113,7 +106,7 @@ roda_monitor <- function(datas, valores, monitor_inicio, cfg) {
                  start   = data_para_decimal(monitor_inicio),
                  formula = formula,
                  order   = as.integer(cfg$bfast_order),
-                 history = "all",
+                 history = cfg_historico(cfg),
                  level   = cfg_num(cfg, "bfast_level")),
     error = function(e) NULL, warning = function(w) NULL
   )

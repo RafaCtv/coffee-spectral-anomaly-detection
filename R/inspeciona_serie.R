@@ -20,13 +20,14 @@ m   <- cfg_modo(cfg, MODO)
 FORMULA <- as.formula(paste("response ~", cfg$bfast_formula))
 ORDEM   <- as.integer(cfg$bfast_order)
 NIVEL   <- cfg_num(cfg, "bfast_level")
+HISTORICO <- cfg_historico(cfg)
 
 serie <- le_serie("dados/serie_ndvi.csv", politica = cfg$agregacao_dia)
 serie$pixel <- id_pixel(serie$longitude, serie$latitude)
 dir.create("figuras", showWarnings = FALSE)
 
 cat("\nparametros: response ~", cfg$bfast_formula, "| order", ORDEM,
-    "| level", NIVEL, "| history all\n")
+    "| level", NIVEL, "| history", HISTORICO, "\n")
 cat("monitoramento a partir de", format(m$monitor_inicio), "\n")
 
 # ---------------------------------------------------------------- centroide
@@ -59,7 +60,7 @@ if (GRAN == "centroide") {
 
   bm <- bfastmonitor(nts, start = data_para_decimal(m$monitor_inicio),
                      formula = FORMULA, order = ORDEM,
-                     history = "all", level = NIVEL)
+                     history = HISTORICO, level = NIVEL)
   r2 <- tryCatch(summary(bm$model)$r.squared, error = function(e) NA_real_)
 
   cat("\nhistorico:", format(decimal_para_data(bm$history[1])), "a",
@@ -129,7 +130,7 @@ if (GRAN == "pixel") {
     if (is.null(nts)) return(NULL)
     perdidas <<- perdidas + (nrow(sub) - sum(!is.na(as.numeric(nts))))
     out <- tryCatch(bfastmonitor(nts, start = inicio, formula = FORMULA,
-                                 order = ORDEM, history = "all", level = NIVEL),
+                                 order = ORDEM, history = HISTORICO, level = NIVEL),
                     error = function(e) NULL, warning = function(w) NULL)
     if (is.null(out)) return(NULL)
     data.frame(longitude = sub$longitude[1], latitude = sub$latitude[1],

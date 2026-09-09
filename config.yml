@@ -22,6 +22,7 @@ escala: 10
 agregacao_dia: primeira
 
 # --- BFAST Monitor ---
+bfast_history: ROC
 bfast_formula: harmon
 bfast_order: 1
 bfast_level: 0.05

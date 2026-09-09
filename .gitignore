@@ -33,3 +33,6 @@ venv/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Dispositivo grafico padrao do Rscript quando nenhum png() esta aberto.
+Rplots.pdf

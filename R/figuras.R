@@ -43,26 +43,71 @@ dev.off()
 if (file.exists("dados/serie_ndvi.csv")) {
   serie <- le_serie("dados/serie_ndvi.csv", verbose = FALSE, politica = cfg$agregacao_dia)
   alvo  <- a[which.min(a$magnitude), ]
-  obs   <- serie[serie$longitude == alvo$longitude &
-                 serie$latitude  == alvo$latitude, ]
+
+  # write.csv grava 15 digitos significativos, entao a coordenada do alertas.csv
+  # difere da serie na ultima casa (~1e-14) e o == nao casa. Buscar a mais proxima.
+  i   <- which.min((serie$longitude - alvo$longitude)^2 +
+                   (serie$latitude  - alvo$latitude)^2)
+  obs <- serie[serie$longitude == serie$longitude[i] &
+               serie$latitude  == serie$latitude[i], ]
+
+  if (nrow(obs) == 0)
+    cat("monitor_pixel.png nao gerado: pixel do alerta ausente na serie\n")
 
   if (nrow(obs) > 0) {
     m <- cfg_modo(cfg)
     nts <- monta_ts(obs$date, obs$NDVI)
+
+    # Entrada do bfastmonitor: a serie agregada e o vetor que o bfastts devolve.
+    v  <- as.numeric(nts)
+    ok <- !is.na(v)
+
+    png("figuras/serie_bfastts.png", width = 1400, height = 800, res = 120)
+    par(mfrow = c(2, 1), mar = c(4, 4.5, 3.5, 1))
+
+    plot(obs$date, obs$NDVI, type = "p", pch = 19, cex = 0.5, col = "grey30",
+         xlab = "", ylab = "NDVI", ylim = c(0, 1), main = "")
+    title(main = sprintf("Antes do bfastts: serie apos agregacao pixel-dia (%d observacoes)", nrow(obs)),
+          line = 1.9, cex.main = 1.0)
+    mtext(sprintf("pixel %.5f, %.5f  |  %s a %s",
+                  obs$longitude[1], obs$latitude[1],
+                  format(min(obs$date), "%d/%m/%Y"),
+                  format(max(obs$date), "%d/%m/%Y")),
+          side = 3, line = 0.4, cex = 0.7)
+
+    # type="p": com a grade quase toda em NA nao ha pontos consecutivos, e a
+    # linha padrao do plot.ts sairia em branco.
+    plot(nts, type = "p", pch = 20, cex = 0.45, col = "grey30",
+         xlab = "", ylab = "NDVI", ylim = c(0, 1), main = "")
+    title(main = sprintf("Depois do bfastts: serie usada pelo bfastmonitor (%d pontos)",
+                         sum(ok)), line = 1.9, cex.main = 1.0)
+    mtext(sprintf("frequencia 365: %d posicoes, %.1f%% com dado, sem interpolacao",
+                  length(v), 100 * mean(ok)),
+          side = 3, line = 0.4, cex = 0.7)
+    dev.off()
+    par(mfrow = c(1, 1))
+    cat("figuras/serie_bfastts.png\n")
+
     bm <- tryCatch(
       bfastmonitor(nts, start = data_para_decimal(m$monitor_inicio),
                    formula = as.formula(paste("response ~", cfg$bfast_formula)),
-                   order = as.integer(cfg$bfast_order), history = "all"),
+                   order = as.integer(cfg$bfast_order),
+                   history = cfg_historico(cfg)),
       error = function(e) NULL)
 
     if (!is.null(bm)) {
-      # res menor que as outras: a legenda do plot.bfastmonitor tem 6 entradas e
-      # invade a area de dados quando a fonte fica grande.
+      # Resolucao menor que as outras: a legenda do plot.bfastmonitor tem 6
+      # entradas e invade a area de dados em fonte maior.
       png("figuras/monitor_pixel.png", width = 1500, height = 850, res = 130)
       par(mar = c(4, 4.5, 3, 1))
+      # Coordenada do alerta; quebra e magnitude sao desta execucao e prevalecem
+      # se o config mudou desde a gravacao do alerta.
       plot(bm, ylab = "NDVI", xlab = "tempo (anos)",
-           main = sprintf("Pixel %.5f, %.5f  |  magnitude %+.3f",
-                          alvo$longitude, alvo$latitude, alvo$magnitude))
+           main = sprintf("Pixel %.5f, %.5f  |  historico %s  |  %s  |  magnitude %+.3f",
+                          alvo$longitude, alvo$latitude, cfg_historico(cfg),
+                          if (is.na(bm$breakpoint)) "sem quebra"
+                          else format(decimal_para_data(bm$breakpoint), "%d/%m/%Y"),
+                          bm$magnitude))
       dev.off()
       cat("figuras/monitor_pixel.png\n")
     } else {
