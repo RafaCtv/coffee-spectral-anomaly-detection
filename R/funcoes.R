@@ -5,23 +5,26 @@ suppressMessages({
   library(bfast)
 })
 
-# bfastmonitor devolve a data da quebra em ano decimal.
+# dia do ano na grade do bfastts (365 dias, 29/02 e 01/03 na mesma posicao)
+yday365 <- function(d) {
+  x <- as.POSIXlt(d)
+  c(0L, 31L, 59L, 90L, 120L, 151L, 181L, 212L, 243L, 273L, 304L, 334L)[1L + x$mon] + x$mday
+}
+
+data_para_decimal <- function(d) {
+  1900 + as.POSIXlt(d)$year + (yday365(d) - 1) / 365
+}
+
+# arredonda em vez de truncar, senao metade das datas volta um dia antes
 decimal_para_data <- function(x) {
   out <- as.Date(rep(NA_real_, length(x)), origin = "1970-01-01")
   ok  <- !is.na(x)
   if (!any(ok)) return(out)
   ano <- floor(x[ok])
-  ini <- as.Date(paste0(ano, "-01-01"))
-  fim <- as.Date(paste0(ano + 1, "-01-01"))
-  out[ok] <- ini + (x[ok] - ano) * as.numeric(fim - ini)
+  k   <- round((x[ok] - ano) * 365)
+  bis <- (ano %% 4 == 0 & ano %% 100 != 0) | ano %% 400 == 0
+  out[ok] <- as.Date(paste0(ano, "-01-01")) + k + (bis & k >= 59)
   out
-}
-
-data_para_decimal <- function(d) {
-  ano <- as.integer(format(d, "%Y"))
-  ini <- as.Date(paste0(ano, "-01-01"))
-  fim <- as.Date(paste0(ano + 1, "-01-01"))
-  ano + as.numeric(d - ini) / as.numeric(fim - ini)
 }
 
 # Mais de uma linha por pixel-dia tem duas causas. Reprocessamento da ESA
