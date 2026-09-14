@@ -1,38 +1,27 @@
-# Serie bruta: fica fora do git. Arquivo grande commitado permanece no
-# historico para sempre, e o GitHub rejeita acima de 100 MB.
-dados/**
-!dados/.gitkeep
+# execucao local
+local/
 
-# Credenciais do Earth Engine. No CI entram como secret.
+# saidas do workflow; resultados/*.csv sao commitados pelo proprio workflow
+dados/
+figuras/
+resultados/*.rds
+
+# credenciais
 *credenciais*.json
 *credentials*.json
 *service_account*.json
 .env
 
-# Saidas regeraveis
-figuras/**
-!figuras/.gitkeep
-log/**
-!log/.gitkeep
-
-# estado/ e versionado de proposito (trilha de alertas)
-estado/*.tmp
+# Node
+node_modules/
 
 # R
 .Rhistory
 .RData
 .Rproj.user/
 *.Rproj
-
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
+Rplots.pdf
 
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# Dispositivo grafico padrao do Rscript quando nenhum png() esta aberto.
-Rplots.pdf
