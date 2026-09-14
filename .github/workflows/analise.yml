@@ -1,0 +1,87 @@
+name: analise diaria
+
+# secrets: EE_SERVICE_ACCOUNT_JSON e EE_PROJECT
+# o schedule so roda na branch padrao do repositorio
+
+on:
+  schedule:
+    # 06:00 em Brasilia
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: analise
+  cancel-in-progress: false
+
+jobs:
+  analisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    permissions:
+      contents: write
+
+    env:
+      DIR_SAIDA: "."
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "release"
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::zoo
+            any::bfast
+            any::jsonlite
+
+      # series brutas ficam fora do git
+      - name: Cache das series
+        uses: actions/cache@v4
+        with:
+          path: dados
+          key: series-${{ github.run_id }}
+          restore-keys: series-
+
+      - name: Extrair
+        env:
+          EE_SERVICE_ACCOUNT_JSON: ${{ secrets.EE_SERVICE_ACCOUNT_JSON }}
+          EE_PROJECT: ${{ secrets.EE_PROJECT }}
+        run: node gee/extrai_serie.js
+
+      - name: Analise
+        run: Rscript R/analise.R
+
+      - name: Figuras
+        run: Rscript R/figuras.R || echo "sem figuras nesta execucao"
+
+      - name: Commit dos resultados
+        run: |
+          git config user.name  "analise"
+          git config user.email "analise@users.noreply.github.com"
+          git add resultados/
+          if git diff --staged --quiet; then
+            echo "sem mudancas"
+          else
+            git commit -m "chore(results): update daily analysis $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: saidas-${{ github.run_id }}
+          path: |
+            resultados/
+            figuras/
+          retention-days: 30
