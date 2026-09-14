@@ -1,9 +1,5 @@
-// Inspecao visual da area candidata. Rodar no Code Editor do Earth Engine.
-//
-// 1. Desenhe o poligono com a ferramenta de geometria e nomeie como "area",
-//    ou importe o shapefile como asset.
-// 2. Rode e leia o console.
-// 3. Copie o GeoJSON impresso no final para area/fazenda_car.geojson.
+// Inspecao da area candidata no Code Editor. Desenhar o poligono como "area"
+// (ou importar o asset) e copiar o GeoJSON impresso para area/fazenda_car.geojson
 
 var DATA_INICIO  = '2026-01-01';
 var DATA_FIM     = '2026-12-31';
@@ -15,8 +11,7 @@ var col = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
 
 print('Imagens no periodo:', col.size());
 
-// Mais de uma quadricula = a area esta na faixa de sobreposicao (110 km de
-// lado, espacadas de 100 km), o que gera observacoes redundantes por passagem.
+// mais de uma quadricula = faixa de sobreposicao
 var tiles = col.aggregate_array('MGRS_TILE').distinct();
 print('Quadriculas MGRS:', tiles);
 print('Orbitas:', col.aggregate_array('SENSING_ORBIT_NUMBER').distinct());
@@ -39,7 +34,7 @@ var limpa = col.linkCollection(cs, ['cs_cdf'])
 Map.centerObject(area, 14);
 Map.addLayer(limpa.median(), {bands: ['B4', 'B3', 'B2'], min: 0, max: 3000},
              'Cor verdadeira');
-// Em falsa cor o cafe aparece em vermelho intenso, separando bem de pasto e mata.
+
 Map.addLayer(limpa.median(), {bands: ['B8', 'B4', 'B3'], min: 0, max: 5000},
              'Falsa cor', false);
 

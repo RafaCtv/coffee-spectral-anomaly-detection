@@ -1,11 +1,5 @@
-// Mostra onde as quadriculas do Sentinel-2 se sobrepoem sobre o municipio, para
-// escolher a area de estudo fora dessa faixa.
-//
-// As quadriculas MGRS tem 110 km e sao espacadas de 100 km, entao vizinhas se
-// sobrepoem em ~10 km. Um talhao nessa faixa recebe o mesmo pixel em dois
-// produtos por passagem.
-//
-// Camada "Cobertura": verde = 1 quadricula (bom), vermelho = 2 ou mais (evitar).
+// Sobreposicao das quadriculas do Sentinel-2 sobre o municipio.
+// Camada Cobertura: verde = 1 quadricula, vermelho = 2 ou mais
 
 var ASSET = 'projects/spad05/assets/BomSucesso';
 var ANO   = 2026;
@@ -20,13 +14,13 @@ var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
 var tiles = s2.aggregate_array('MGRS_TILE').distinct().sort();
 print('Quadriculas que cobrem o municipio:', tiles);
 
-// Footprint de cada quadricula.
+// contorno de cada quadricula
 var footprints = ee.FeatureCollection(tiles.map(function (t) {
   var img = s2.filter(ee.Filter.eq('MGRS_TILE', t)).first();
   return ee.Feature(ee.Image(img).geometry(), {tile: t});
 }));
 
-// Quantas quadriculas cobrem cada pixel: 1 = area limpa, 2+ = sobreposicao.
+// quantas quadriculas cobrem cada pixel
 var cobertura = ee.ImageCollection.fromImages(
   tiles.map(function (t) {
     var img = s2.filter(ee.Filter.eq('MGRS_TILE', t)).first();
@@ -49,7 +43,7 @@ Map.addLayer(footprints.map(function (f) {
 
 Map.addLayer(cafe.style({color: 'black', fillColor: '00000088'}), {}, 'Talhoes de cafe');
 
-// Classifica cada talhao pelo numero de quadriculas que o cobrem.
+// numero de quadriculas por talhao
 var classificados = cafe.map(function (f) {
   var n = cobertura.reduceRegion({
     reducer: ee.Reducer.max(),
@@ -73,7 +67,7 @@ Map.addLayer(limpos.style({color: '00b050', fillColor: '00b05088'}),
 Map.addLayer(sobrepostos.style({color: 'ff0000', fillColor: 'ff000088'}),
              {}, 'Talhoes na sobreposicao', false);
 
-// Exporta so os talhoes fora da sobreposicao, para usar no agrupamento.
+// exporta os talhoes fora da sobreposicao
 Export.table.toDrive({
   collection: limpos,
   description: 'talhoes_fora_da_sobreposicao',

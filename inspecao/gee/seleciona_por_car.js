@@ -1,38 +1,29 @@
-// Seleciona os talhoes cafeeiros de uma propriedade registrada no CAR.
-//
-// Substitui o agrupamento por proximidade: em vez de inferir a fazenda pela
-// distancia entre talhoes, usa o perimetro declarado do imovel rural.
-//
-// O SICAR tem dois downloads, com esquemas de atributos diferentes:
-//   por propriedade (clicando no mapa): recibo, modfiscais, tema, area
-//   base municipal:                     COD_IMOVEL, NUM_AREA, NOM_MUNICI
-// FORMATO seleciona qual dos dois. No formato por propriedade, cada shapefile
-// traz duas feicoes ("Area do Imovel" e "Area Liquida"), quase coincidentes.
-//
-// Etapa 1: ALVO = null -> ranqueia os imoveis por area de cafe
-// Etapa 2: ALVO = '<codigo>' -> seleciona um imovel e exporta
+// Recorta os talhoes de cafe pelo perimetro de um imovel do CAR.
+// ALVO = null ranqueia os imoveis por area de cafe; com o codigo, exporta
+// FORMATO: 'propriedade' (download por imovel) ou 'municipal' (base do municipio)
 
-var FORMATO = 'propriedade';   // 'propriedade' ou 'municipal'
+var FORMATO = 'propriedade';
 
-// Um asset por imovel baixado; no formato municipal, um asset so.
+// um asset por imovel baixado; no formato municipal, um asset so
 var CAR = [
   'projects/spad05/assets/Area_do_Imovel'
 ];
 
+// RECUO em metros
 var CAFE  = 'projects/spad05/assets/BomSucesso';
 var ALVO  = 'MG-3108008-8D60BF7DCAF14B72A73918EB8892BE5A';
-var RECUO = -15;    // m; buffer negativo, remove pixels de borda do talhao
+var RECUO = -15;
 var ANO   = 2026;
 
 var CAMPO_COD = FORMATO === 'propriedade' ? 'recibo' : 'COD_IMOVEL';
 var CAMPO_AREA = FORMATO === 'propriedade' ? 'area' : 'NUM_AREA';
 
-// map do lado do cliente: CAR e um array JavaScript, nao um ee.List.
+// map do lado do cliente, CAR e array JS e nao ee.List
 var car = ee.FeatureCollection(CAR.map(function (id) {
   return ee.FeatureCollection(id);
 })).flatten();
 
-// "Area Liquida do Imovel" repete o mesmo perimetro; fica uma feicao por imovel.
+// "Area Liquida do Imovel" repete o perimetro, fica uma feicao por imovel
 if (FORMATO === 'propriedade') {
   car = car.distinct([CAMPO_COD]);
 }
@@ -75,8 +66,7 @@ if (ALVO === null) {
 
   var imovel = ee.Feature(car.filter(ee.Filter.eq(CAMPO_COD, ALVO)).first());
 
-  // Recorta os talhoes pelo perimetro do imovel: um talhao que atravessa a
-  // divisa entra apenas na parte que pertence a esta propriedade.
+  // talhao que atravessa a divisa entra so com a parte do imovel
   var talhoes = cafe.filterBounds(imovel.geometry()).map(function (f) {
     var g = f.geometry().intersection(imovel.geometry(), 1);
     return f.setGeometry(g).set('ha_recorte', g.area(10).divide(1e4));
@@ -101,7 +91,7 @@ if (ALVO === null) {
   Map.addLayer(comRecuo.style({color: 'yellow', fillColor: 'ffff0044'}),
                {}, 'Com recuo');
 
-  // Mais de uma quadricula = area na faixa de sobreposicao.
+  // mais de uma quadricula = faixa de sobreposicao
   var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
              .filterBounds(geom)
              .filterDate(ANO + '-01-01', ANO + '-12-31');

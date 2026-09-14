@@ -1,21 +1,16 @@
-// Verifica se um ponto qualquer cai na faixa de sobreposicao entre quadriculas
-// do Sentinel-2, sem depender de asset nenhum.
-//
-// As quadriculas MGRS tem 110 km e sao espacadas de 100 km, entao vizinhas se
-// sobrepoem em ~10 km. Um alvo nessa faixa recebe o mesmo pixel em dois
-// produtos por passagem, e o bfastts descarta um deles silenciosamente.
-//
-// Camada "Cobertura": verde = 1 quadricula (usar), laranja/vermelho = 2 ou mais.
+// Verifica se um ponto cai na sobreposicao entre quadriculas do Sentinel-2.
+// Camada Cobertura: verde = 1 quadricula, laranja/vermelho = 2 ou mais
 
+// RAIO em metros
 var LON  = -45.112189;
 var LAT  = -22.134052;
-var RAIO = 8000;      // m; extensao inspecionada em volta do ponto
+var RAIO = 8000;
 var ANO  = 2026;
 
 var ponto = ee.Geometry.Point([LON, LAT]);
 var area  = ponto.buffer(RAIO).bounds();
 
-// --- quadriculas exatamente sobre o ponto ---------------------------
+// quadriculas sobre o ponto
 var noPonto = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
                 .filterBounds(ponto)
                 .filterDate(ANO + '-01-01', ANO + '-12-31');
@@ -26,7 +21,7 @@ print('Orbitas:', noPonto.aggregate_array('SENSING_ORBIT_NUMBER').distinct().sor
 print('Imagens em ' + ANO + ':', noPonto.size());
 print('Uma quadricula = fora da sobreposicao.');
 
-// --- cobertura na vizinhanca ----------------------------------------
+// cobertura na vizinhanca
 var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
            .filterBounds(area)
            .filterDate(ANO + '-01-01', ANO + '-06-30');
@@ -34,7 +29,7 @@ var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
 var tiles = s2.aggregate_array('MGRS_TILE').distinct().sort();
 print('Quadriculas num raio de ' + (RAIO / 1000) + ' km:', tiles);
 
-// Quantas quadriculas cobrem cada pixel.
+// quantas quadriculas cobrem cada pixel
 var cobertura = ee.ImageCollection.fromImages(
   tiles.map(function (t) {
     var img = s2.filter(ee.Filter.eq('MGRS_TILE', t)).first();
@@ -55,7 +50,7 @@ Map.addLayer(footprints.style({color: 'blue', fillColor: '00000000', width: 2}),
              {}, 'Limites das quadriculas');
 Map.addLayer(ponto, {color: 'black'}, 'Ponto');
 
-// --- densidade e contexto visual -------------------------------------
+// observacoes validas e imagem de contexto
 var cs = ee.ImageCollection('GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED');
 var limpa = noPonto.linkCollection(cs, ['cs_cdf'])
                    .map(function (img) {

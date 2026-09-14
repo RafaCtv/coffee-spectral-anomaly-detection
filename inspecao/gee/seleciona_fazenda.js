@@ -1,16 +1,12 @@
-// Seleciona os talhoes de uma fazenda a partir do mapeamento municipal e
-// exporta como GeoJSON para area/fazenda_car.geojson.
-//
-// 1. Rode com RECORTE = null para ver todos os talhoes do municipio.
-// 2. Desenhe um retangulo em volta da fazenda escolhida (ferramenta de
-//    geometria) e nomeie a variavel como "recorte".
-// 3. Rode de novo. Confira o console e a tabela de tiles.
-// 4. Dispare a task de export e baixe o GeoJSON.
+// Seleciona talhoes por um retangulo desenhado e exporta como GeoJSON.
+// RECORTE = null mostra o municipio; desenhar o retangulo como "recorte" e
+// usar RECORTE = recorte
 
+// AREA_MIN em hectares, RECUO em metros
 var ASSET   = 'projects/spad05/assets/BomSucesso';
-var RECORTE = null;          // trocar por: recorte
-var AREA_MIN = 1.0;          // ha; descarta fragmentos pequenos demais
-var RECUO    = -15;          // m; buffer negativo para dropar pixels de borda
+var RECORTE = null;
+var AREA_MIN = 1.0;
+var RECUO    = -15;
 
 var todos = ee.FeatureCollection(ASSET);
 print('Talhoes no municipio:', todos.size());
@@ -24,7 +20,7 @@ if (RECORTE === null) {
   print('Desenhe um retangulo em volta da fazenda e nomeie como "recorte".');
 } else {
 
-  // --- selecao ---------------------------------------------------
+  // selecao
   var sel = todos.filterBounds(RECORTE).filter(ee.Filter.gte('Area_ha', AREA_MIN));
 
   print('--- selecao ---');
@@ -32,8 +28,7 @@ if (RECORTE === null) {
   print('Area selecionada (ha):', sel.aggregate_sum('Area_ha'));
   print('Areas individuais (ha):', sel.aggregate_array('Area_ha').sort());
 
-  // Buffer negativo remove a primeira fileira de pixels, que sao mistos
-  // (parte cafe, parte carreador ou mata).
+  // recuo tira os pixels mistos da borda
   var comRecuo = sel.map(function (f) {
     return f.setGeometry(f.geometry().buffer(RECUO));
   }).filter(ee.Filter.notNull(['Area_ha']));
@@ -45,7 +40,7 @@ if (RECORTE === null) {
   Map.addLayer(sel.style({color: 'red', fillColor: '00000000', width: 2}), {}, 'Selecionados');
   Map.addLayer(comRecuo.style({color: 'yellow', fillColor: 'ffff0044'}), {}, 'Com recuo');
 
-  // --- quadriculas que cobrem a selecao --------------------------
+  // quadriculas que cobrem a selecao
   var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
              .filterBounds(geom)
              .filterDate('2026-01-01', '2026-12-31');
@@ -63,7 +58,7 @@ if (RECORTE === null) {
   Map.addLayer(contornos.style({color: 'cyan', fillColor: '00000000', width: 2}),
                {}, 'Limites das quadriculas');
 
-  // --- contexto visual -------------------------------------------
+  // imagem de contexto
   var cs = ee.ImageCollection('GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED');
   var limpa = s2.linkCollection(cs, ['cs_cdf'])
                 .map(function (img) {
@@ -87,7 +82,7 @@ if (RECORTE === null) {
     imageCollection: ndvi, region: geom, reducer: ee.Reducer.mean(), scale: 10
   }).setOptions({title: 'NDVI medio da selecao (2026)', lineWidth: 2, pointSize: 3}));
 
-  // --- export ----------------------------------------------------
+  // export
   Export.table.toDrive({
     collection: comRecuo,
     description: 'fazenda_geojson',

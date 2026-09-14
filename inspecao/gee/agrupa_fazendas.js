@@ -1,25 +1,19 @@
-// Agrupa os talhoes do mapeamento municipal em blocos por proximidade e exporta
-// os talhoes de um bloco como GeoJSON.
-//
-// Talhoes da mesma fazenda ficam proximos entre si. Inflando cada poligono em
-// DIST metros e unindo os que se tocam, cada bloco resultante e um candidato a
-// fazenda. Os poligonos originais sao recuperados depois, sem redesenhar nada.
-//
-// Etapa 1: PONTO = null -> desenha os blocos no mapa
-// Etapa 2: marcar um ponto sobre o bloco desejado (ferramenta de geometria,
-//          nomear a variavel como "ponto") e trocar PONTO por: ponto
+// Agrupa talhoes proximos em blocos (candidatos a fazenda) e exporta um bloco.
+// PONTO = null desenha os blocos; depois marcar um ponto no bloco, nomear
+// como "ponto" e usar PONTO = ponto
 
+// DIST e RECUO em metros, AREA_MIN em hectares
 var ASSET    = 'projects/spad05/assets/BomSucesso';
-var DIST     = 250;    // m; distancia maxima entre talhoes da mesma fazenda
-var AREA_MIN = 1.0;    // ha; descarta fragmentos
-var RECUO    = -15;    // m; buffer negativo, remove pixels de borda do talhao
+var DIST     = 250;
+var AREA_MIN = 1.0;
+var RECUO    = -15;
 var ANO      = 2026;
-var PONTO    = null;   // trocar por: ponto
+var PONTO    = null;
 
 var todos = ee.FeatureCollection(ASSET).filter(ee.Filter.gte('Area_ha', AREA_MIN));
 print('Talhoes (apos filtro de area):', todos.size());
 
-// Infla, une o que se toca e separa os componentes resultantes.
+// infla, une o que se toca e separa os componentes
 var partes = todos.geometry().buffer(DIST).dissolve(10).geometries();
 print('Blocos encontrados:', partes.size());
 
@@ -55,7 +49,7 @@ if (PONTO === null) {
   print('Area de cafe (ha):', talhoes.aggregate_sum('Area_ha'));
   print('Areas individuais (ha):', talhoes.aggregate_array('Area_ha').sort());
 
-  // Pixel de 10 m sobre a divisa e misto (parte cafe, parte carreador).
+  // recuo tira os pixels mistos da borda
   var comRecuo = talhoes.map(function (f) {
     return f.setGeometry(f.geometry().buffer(RECUO));
   }).filter(ee.Filter.notNull(['Area_ha']));
@@ -69,7 +63,7 @@ if (PONTO === null) {
   Map.addLayer(comRecuo.style({color: 'yellow', fillColor: 'ffff0044'}),
                {}, 'Com recuo');
 
-  // Mais de uma quadricula = area na faixa de sobreposicao.
+  // mais de uma quadricula = faixa de sobreposicao
   var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
              .filterBounds(geom)
              .filterDate(ANO + '-01-01', ANO + '-12-31');
