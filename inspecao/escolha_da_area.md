@@ -23,14 +23,14 @@ que não correspondem a nada acontecendo no cafeeiro. Mitigação: recuo
 
 ## Verificação de uma candidata
 
-Visual, no Code Editor: `gee/inspeciona_area.js` desenha os contornos das
+Visual, no Code Editor: `inspecao/gee/inspeciona_area.js` desenha os contornos das
 quadrículas sobre o mapa, a composição de 2026, o NDVI mediano, a contagem de
 observações válidas por pixel e a série temporal média.
 
 Numérico, com o polígono salvo:
 
 ```bash
-python gee/checa_area.py --area area/candidata_01.geojson
+node inspecao/gee/checa_area.js --area area/candidata_01.geojson
 ```
 
 | Critério | Alvo | Motivo |

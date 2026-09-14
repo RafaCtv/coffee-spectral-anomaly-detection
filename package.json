@@ -1,0 +1,14 @@
+{
+  "name": "coffee-spectral-anomaly-detection",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "extrai": "node gee/extrai_serie.js"
+  },
+  "dependencies": {
+    "@google/earthengine": "1.7.43"
+  }
+}

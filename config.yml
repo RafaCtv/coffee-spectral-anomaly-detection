@@ -1,4 +1,4 @@
-# Parametros do pipeline. Lido pelo Python (gee/) e pelo R (R/).
+# Parametros do pipeline. Lido pelo Node (gee/) e pelo R (R/).
 # Manter o formato plano: "chave: valor", sem aninhamento e sem listas.
 
 # --- Area ---
@@ -8,6 +8,10 @@ area_nome: MG-3108008-8D60BF7D
 # --- Periodo de extracao (data_fim aceita "hoje") ---
 data_inicio: 2019-01-01
 data_fim: hoje
+
+# --- Series extraidas, relativas a DIR_SAIDA ---
+serie_com_mascara: dados/serie_ndvi_com_mascara.csv
+serie_sem_mascara: dados/serie_ndvi_sem_mascara.csv
 
 # --- Sentinel-2 e mascara de nuvem ---
 colecao: COPERNICUS/S2_SR_HARMONIZED
