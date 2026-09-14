@@ -1,0 +1,3 @@
+"mascara","longitude","latitude","criterio","dist_borda_m","n_obs","historico_inicio","historico_fim","n_historico","r2_historico","sigma_historico","data_quebra","desvio_quebra","magnitude","aviso"
+"com_mascara",-44.7799838507814,-20.9688796037957,"centroide do maior poligono",174.2,320,2019-01-02,2021-05-26,86,0.6478,0.0622,2021-10-03,0.059893,-0.019813,NA
+"sem_mascara",-44.7799838507814,-20.9688796037957,"centroide do maior poligono",174.2,583,2019-01-02,2021-05-31,177,0.2425,0.3102,NA,NA,0.040781,NA
