@@ -1,19 +1,17 @@
-# Parametros do pipeline. Lido pelo Node (gee/) e pelo R (R/).
-# Manter o formato plano: "chave: valor", sem aninhamento e sem listas.
+# lido pelo Node (gee/) e pelo R (R/); manter "chave: valor", sem aninhamento
+# caminhos das series sao relativos a DIR_SAIDA
 
-# --- Area ---
+# area
 area_geojson: area/fazenda_car.geojson
 area_nome: MG-3108008-8D60BF7D
 
-# --- Periodo de extracao (data_fim aceita "hoje") ---
+# extracao (data_fim aceita "hoje")
 data_inicio: 2019-01-01
 data_fim: hoje
-
-# --- Series extraidas, relativas a DIR_SAIDA ---
 serie_com_mascara: dados/serie_ndvi_com_mascara.csv
 serie_sem_mascara: dados/serie_ndvi_sem_mascara.csv
 
-# --- Sentinel-2 e mascara de nuvem ---
+# Sentinel-2 e mascara de nuvem
 colecao: COPERNICUS/S2_SR_HARMONIZED
 colecao_nuvem: GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED
 banda_qa: cs_cdf
@@ -22,21 +20,19 @@ banda_vermelho: B4
 banda_nir: B8
 escala: 10
 
-# --- Observacoes concorrentes no mesmo dia: media ou primeira ---
+# mais de uma observacao no mesmo pixel-dia: primeira ou media
 agregacao_dia: primeira
 
-# --- BFAST Monitor ---
+# analise (analise_fim aceita "hoje"; evento_ref pode ficar vazio)
+monitor_inicio: 2021-01-01
+analise_fim: hoje
+evento_ref: 2021-07-01
+
+# bfastmonitor (type OLS-MOSUM)
 bfast_history: ROC
 bfast_formula: harmon
 bfast_order: 1
+bfast_h: 0.25
+bfast_end: 10
 bfast_level: 0.05
 min_obs_historico: 30
-min_meses_historico: 14
-
-# --- Modo: operacao (dados novos) ou replay (simula sobre o passado) ---
-modo: operacao
-
-monitor_inicio: 2026-01-01
-
-replay_monitor_inicio: 2021-01-01
-replay_evento_ref: 2021-07-01

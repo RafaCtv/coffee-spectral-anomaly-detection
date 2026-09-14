@@ -1,6 +1,4 @@
-# Leitor do config.yml. Aceita apenas "chave: valor" (formato plano),
-# para nao depender do pacote yaml.
-
+# leitor do config.yml plano ("chave: valor"), sem depender do pacote yaml
 le_config <- function(caminho = "config.yml") {
   if (!file.exists(caminho)) stop("config nao encontrado: ", caminho)
   linhas <- trimws(readLines(caminho, warn = FALSE))
@@ -34,23 +32,28 @@ cfg_data <- function(cfg, chave) {
   d
 }
 
-# history do bfastmonitor: ROC recorta o trecho estavel mais recente do
-# historico por pixel, all usa o historico inteiro, BP segmenta por quebras.
+# local/ por padrao; no workflow DIR_SAIDA=.
+dir_saida <- function(...) file.path(Sys.getenv("DIR_SAIDA", "local"), ...)
+
 cfg_historico <- function(cfg) {
   v <- cfg$bfast_history
-  if (is.null(v) || !nzchar(v)) return("ROC")
-  if (!v %in% c("ROC", "BP", "all"))
-    stop("config 'bfast_history' invalido: ", v, " (use ROC, BP ou all)")
+  if (!v %in% c("all", "ROC", "BP"))
+    stop("config 'bfast_history' invalido: ", v, " (use all, ROC ou BP)")
   v
 }
 
-cfg_modo <- function(cfg, modo = NULL) {
-  m <- if (is.null(modo)) cfg$modo else modo
-  if (!m %in% c("operacao", "replay")) stop("modo invalido: ", m)
+arq_serie <- function(cfg, mascara = TRUE) {
+  chave <- if (mascara) "serie_com_mascara" else "serie_sem_mascara"
+  if (is.null(cfg[[chave]])) stop("config '", chave, "' ausente")
+  dir_saida(cfg[[chave]])
+}
+
+cfg_analise <- function(cfg) {
+  ref <- cfg$evento_ref
   list(
-    modo           = m,
-    monitor_inicio = if (m == "replay") cfg_data(cfg, "replay_monitor_inicio")
-                     else               cfg_data(cfg, "monitor_inicio"),
-    evento_ref     = if (m == "replay") cfg_data(cfg, "replay_evento_ref") else NA
+    monitor_inicio = cfg_data(cfg, "monitor_inicio"),
+    fim            = cfg_data(cfg, "analise_fim"),
+    evento_ref     = if (is.null(ref) || !nzchar(ref)) as.Date(NA)
+                     else cfg_data(cfg, "evento_ref")
   )
 }

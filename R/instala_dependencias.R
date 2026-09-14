@@ -1,7 +1,5 @@
-# Instala os pacotes R necessarios. Rode uma vez.
-#   Rscript R/instala_dependencias.R
-
-pacotes <- c("zoo", "bfast", "strucchangeRcpp")
+# Rscript R/instala_dependencias.R
+pacotes <- c("zoo", "bfast", "strucchangeRcpp", "jsonlite")
 faltando <- setdiff(pacotes, rownames(installed.packages()))
 
 if (length(faltando) == 0) {
