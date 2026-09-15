@@ -24,15 +24,15 @@ escala: 10
 agregacao_dia: primeira
 
 # analise (analise_fim aceita "hoje"; evento_ref pode ficar vazio)
-monitor_inicio: 2021-06-01
-analise_fim: hoje
+monitor_inicio: 2021-01-01
+analise_fim: 2022-12-31
 evento_ref: 2021-07-01
 
-# bfastmonitor (type OLS-MOSUM)
+# bfastmonitor (type OLS-MOSUM), mesmos parametros do NovaTentativa
 bfast_history: all
 bfast_formula: harmon
-bfast_order: 3
+bfast_order: 1
 bfast_h: 0.25
 bfast_end: 10
 bfast_level: 0.05
-min_obs_historico: 46
+min_obs_historico: 10

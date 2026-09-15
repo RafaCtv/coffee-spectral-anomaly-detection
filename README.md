@@ -38,15 +38,17 @@ satellite image time series*, Remote Sensing of Environment 123, 98–108.
 
 | Parâmetro | Valor |
 |---|---|
-| `start` (`monitor_inicio`) | 2021-06-01 |
+| `start` (`monitor_inicio`) | 2021-01-01 |
 | `formula` | `response ~ harmon` |
-| `order` | 3 |
+| `order` | 1 |
 | `history` | `all` |
 | `type` | `OLS-MOSUM` |
 | `h` | 0.25 |
 | `end` | 10 |
 | `level` | 0.05 |
-| `min_obs_historico` | 46 |
+| `min_obs_historico` | 10 |
+
+Série de 01/01/2019 a 31/12/2022 (`analise_fim`), montada com `bfastts(type = "irregular")`.
 
 ## Saídas
 
