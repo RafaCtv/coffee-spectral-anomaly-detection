@@ -25,9 +25,9 @@ decimal_para_data <- function(x) {
   out
 }
 
-# um valor por pixel-dia: mesmo datatake fica o maior img_id, datatakes
-# diferentes no mesmo dia seguem a politica (primeira ou media)
-agrega_pixel_dia <- function(df, politica = "media") {
+# um valor por pixel-dia: primeira aquisicao do dia (datetime) ou media de
+# todas as imagens do dia. Sem regra o bfastts fica com a ultima linha
+agrega_pixel_dia <- function(df, politica = "primeira") {
   stopifnot(all(c("longitude", "latitude", "date", "NDVI") %in% names(df)))
   if (!politica %in% c("media", "primeira"))
     stop("agregacao_dia invalida: ", politica, " (use media ou primeira)")
@@ -35,19 +35,10 @@ agrega_pixel_dia <- function(df, politica = "media") {
   df <- df[!is.na(df$NDVI), ]
   n_antes <- nrow(df)
 
-  n_datatake <- 0L
-  if ("img_id" %in% names(df)) {
-    df$datatake <- sub("_.*$", "", df$img_id)
-    df <- df[order(df$longitude, df$latitude, df$date, df$datatake, df$img_id), ]
-    chave <- paste(df$longitude, df$latitude, df$datatake)
-    df <- df[!duplicated(chave, fromLast = TRUE), ]
-    n_datatake <- n_antes - nrow(df)
-  }
-  n_pre <- nrow(df)
-
   if (politica == "primeira") {
     ord <- if ("datetime" %in% names(df)) df$datetime else as.character(df$date)
-    df <- df[order(df$longitude, df$latitude, df$date, ord), ]
+    img <- if ("img_id" %in% names(df)) df$img_id else ""
+    df <- df[order(df$longitude, df$latitude, df$date, ord, img), ]
     ag <- df[!duplicated(paste(df$longitude, df$latitude, df$date)),
              c("longitude", "latitude", "date", "NDVI")]
   } else {
@@ -57,13 +48,11 @@ agrega_pixel_dia <- function(df, politica = "media") {
 
   attr(ag, "n_antes")   <- n_antes
   attr(ag, "n_depois")  <- nrow(ag)
-  attr(ag, "datatake")  <- n_datatake
-  attr(ag, "mesmo_dia") <- n_pre - nrow(ag)
   attr(ag, "politica")  <- politica
   ag
 }
 
-le_serie <- function(caminho, verbose = TRUE, politica = "media") {
+le_serie <- function(caminho, verbose = TRUE, politica = "primeira") {
   if (!file.exists(caminho))
     stop("serie nao encontrada: ", caminho, "\nRode antes: node gee/extrai_serie.js")
   df <- read.csv(caminho, stringsAsFactors = FALSE)
@@ -72,8 +61,8 @@ le_serie <- function(caminho, verbose = TRUE, politica = "media") {
   if (verbose) {
     cat(sprintf("serie: %d linhas -> %d observacoes pixel-dia\n",
                 attr(ag, "n_antes"), attr(ag, "n_depois")))
-    cat(sprintf("  mesmo datatake: %d | mesmo dia (%s): %d\n",
-                attr(ag, "datatake"), attr(ag, "politica"), attr(ag, "mesmo_dia")))
+    cat(sprintf("  imagens repetidas no mesmo pixel-dia resolvidas por '%s': %d\n",
+                attr(ag, "politica"), attr(ag, "n_antes") - attr(ag, "n_depois")))
     cat(sprintf("pixels: %d | periodo: %s a %s\n",
                 length(unique(paste(ag$longitude, ag$latitude))),
                 format(min(ag$date)), format(max(ag$date))))
