@@ -87,7 +87,7 @@ ajusta_monitor <- function(nts, monitor_inicio, cfg) {
                type    = "OLS-MOSUM",
                h       = cfg_num(cfg, "bfast_h"),
                end     = cfg_num(cfg, "bfast_end"),
-               level   = cfg_num(cfg, "bfast_level"))
+               level   = c(cfg_num(cfg, "bfast_level"), 0.05))
 }
 
 # bm = NULL se o historico for curto ou o ajuste falhar; avisos ficam em r$aviso
