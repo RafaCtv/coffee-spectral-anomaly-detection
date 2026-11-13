@@ -21,17 +21,6 @@ Rscript 10_monitor_mesmas_quebras.R
 
 Os passos 1, 5 e 7 precisam da chave do Earth Engine (`EE_SERVICE_ACCOUNT_FILE` ou `../local/service_account.json`). Os demais precisam dos pacotes `bfast` e `jsonlite`. Todos os parâmetros ficam em [parametros.R](parametros.R).
 
-## Diferenças em relação ao código do SBSR
-
-| | SBSR | Aqui |
-|---|---|---|
-| Histórico do Monitor | `ROC` dentro do período estável | `all`: todo o período estável |
-| Início do monitoramento | dia seguinte à quebra | `recuo_dias` antes da quebra |
-| Atraso | desde o início do monitoramento | desde a quebra; negativo = alarme antes dela |
-| Detecção da quebra | mais da metade dos pixels com alarme em qualquer data | mais da metade dos pixels com alarme entre a quebra e `janela_dias` depois |
-
-A data da quebra testada é o dia seguinte à data `primeira` do grupo (a quebra mais antiga entre os pixels do grupo).
-
 ## Saídas
 
 - `resultados/quebras_pixel.csv`: quebras do BFAST Lite por pixel.
