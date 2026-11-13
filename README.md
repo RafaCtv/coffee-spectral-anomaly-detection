@@ -4,6 +4,10 @@ Detecção de anomalias em séries temporais de NDVI de áreas cafeeiras com
 Sentinel-2 e BFAST Monitor. Código do TFG *Detecção de anomalias em séries
 temporais espectrais da cafeicultura no Sul de Minas Gerais* (UNIFEI).
 
+A análise final do TFG, com o BFAST Lite definindo o histórico do BFAST Monitor
+nas 18 áreas amostrais, está em [AnaliseFinal](AnaliseFinal/README.md). O
+restante deste README descreve o fluxo diário da primeira versão do trabalho.
+
 ## Análises
 
 `bfastmonitor` em quatro combinações:
@@ -69,8 +73,9 @@ sobre todo o monitoramento.
 ## Estrutura
 
 ```
+AnaliseFinal/       análise final do TFG (BFAST Lite e BFAST Monitor)
 config.yml          parâmetros
-area/               talhões da área de estudo
+area/               talhões e áreas amostrais
 gee/                extração no Earth Engine (Node)
 R/                  agregação, bfastmonitor e figuras
 inspecao/           seleção da área e diagnósticos
